@@ -65,8 +65,17 @@ entry_busqueda = tk.Entry(frame_busqueda, width=40)
 entry_busqueda.pack(side=tk.LEFT, padx=(4, 8))
 tk.Button(frame_busqueda, text="Buscar", command=on_buscar).pack(side=tk.LEFT)
 
-# Etiquetas temporales para identificar cada frame visualmente
-tk.Label(frame_lista, text="[Lista de productos]", fg="gray").pack(expand=True)
+# Listbox con scrollbar vertical
+scrollbar = tk.Scrollbar(frame_lista, orient=tk.VERTICAL)
+listbox = tk.Listbox(frame_lista, yscrollcommand=scrollbar.set, activestyle="arrow")
+scrollbar.config(command=listbox.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+for p in productos:
+    listbox.insert(tk.END, p["nombre"])
+
+# Etiqueta temporal del panel derecho
 tk.Label(frame_detalle, text="[Detalle]", fg="gray").pack(expand=True)
 
 root.mainloop()
