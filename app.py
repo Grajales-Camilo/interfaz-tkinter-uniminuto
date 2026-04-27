@@ -12,10 +12,12 @@ FIRESTORE_URL = (
 
 
 def cargar_productos():
+    global tiempo_m2
     t0 = time.perf_counter()
     respuesta = requests.get(FIRESTORE_URL)
     t1 = time.perf_counter()
-    print(f"[M2] Tiempo carga Firestore: {t1 - t0:.3f}s")
+    tiempo_m2 = t1 - t0
+    print(f"[M2] Tiempo carga Firestore: {tiempo_m2:.3f}s")
     respuesta.raise_for_status()
     documentos = respuesta.json().get("documents", [])
     lista = []
@@ -33,6 +35,11 @@ def cargar_productos():
     print(f"[INFO] Productos cargados: {len(lista)}")
     return lista
 
+
+# Acumuladores de métricas
+tiempo_m2 = 0.0
+tiempos_m3 = []
+tiempos_m4 = []
 
 productos = cargar_productos()
 productos_visibles = list(productos)  # subconjunto actualmente en el Listbox
@@ -72,7 +79,9 @@ def on_buscar():
     t0 = time.perf_counter()
     filtrados = [p for p in productos if termino in p["nombre"].lower()] if termino else productos
     t1 = time.perf_counter()
-    print(f"[M4] Tiempo filtrado: {t1 - t0:.6f}s — {len(filtrados)} resultado(s)")
+    duracion_m4 = t1 - t0
+    tiempos_m4.append(duracion_m4)
+    print(f"[M4] Tiempo filtrado: {duracion_m4:.6f}s — {len(filtrados)} resultado(s)")
     poblar_listbox(filtrados)
 
 
@@ -80,7 +89,9 @@ def descargar_imagen(url):
     t0 = time.perf_counter()
     respuesta = requests.get(url, timeout=10)
     t1 = time.perf_counter()
-    print(f"[M3] Tiempo descarga imagen: {t1 - t0:.3f}s")
+    duracion_m3 = t1 - t0
+    tiempos_m3.append(duracion_m3)
+    print(f"[M3] Tiempo descarga imagen: {duracion_m3:.3f}s")
     respuesta.raise_for_status()
     img = Image.open(BytesIO(respuesta.content))
     img.thumbnail((200, 200))
@@ -141,4 +152,16 @@ lbl_precio_usd.pack(padx=10, anchor=tk.W)
 lbl_precio_cop = tk.Label(frame_detalle, text="", font=("Arial", 10))
 lbl_precio_cop.pack(padx=10, anchor=tk.W)
 
+def on_closing():
+    prom_m3 = sum(tiempos_m3) / len(tiempos_m3) if tiempos_m3 else 0.0
+    prom_m4 = sum(tiempos_m4) / len(tiempos_m4) if tiempos_m4 else 0.0
+    print("\n─── Resumen de métricas de la sesión ───")
+    print(f"  M2  Carga inicial Firestore : {tiempo_m2:.3f}s")
+    print(f"  M3  Descarga imagen (prom.) : {prom_m3:.3f}s  (n={len(tiempos_m3)})")
+    print(f"  M4  Filtrado búsqueda (prom): {prom_m4:.6f}s  (n={len(tiempos_m4)})")
+    print("────────────────────────────────────────\n")
+    root.destroy()
+
+
+root.protocol("WM_DELETE_WINDOW", on_closing)
 root.mainloop()
