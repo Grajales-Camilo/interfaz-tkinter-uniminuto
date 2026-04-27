@@ -135,14 +135,14 @@ def on_seleccionar(event):
         try:
             foto = descargar_imagen(url)
             lbl_imagen.config(image=foto, text="")
-            lbl_imagen.image = foto  # evita que el GC elimine la referencia
+            lbl_imagen.image = foto  # type: ignore[attr-defined]
         except Exception as e:
             print(f"[WARN] No se pudo cargar imagen: {e}")
             lbl_imagen.config(image="", text="Sin imagen")
-            lbl_imagen.image = None
+            lbl_imagen.image = None  # type: ignore[attr-defined]
     else:
         lbl_imagen.config(image="", text="Sin imagen")
-        lbl_imagen.image = None
+        lbl_imagen.image = None  # type: ignore[attr-defined]
 
     lbl_nombre.config(text=producto["nombre"])
     lbl_precio_usd.config(text=f"USD  ${float(producto['precio_usd']):.2f}")
