@@ -9,6 +9,31 @@ FIRESTORE_URL = (
     f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}"
     "/databases/(default)/documents/products"
 )
+EXCHANGE_RATE_URL = (
+    f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}"
+    "/databases/(default)/documents/settings/exchange_rate"
+)
+
+
+def parse_numero(field):
+    if "doubleValue" in field:
+        return float(field["doubleValue"])
+    if "integerValue" in field:
+        return int(field["integerValue"])
+    return 0
+
+
+def cargar_tasa_cambio():
+    try:
+        respuesta = requests.get(EXCHANGE_RATE_URL, timeout=10)
+        respuesta.raise_for_status()
+        fields = respuesta.json().get("fields", {})
+        tasa = parse_numero(fields.get("usdToCop", {}))
+        print(f"[INFO] Tasa USD→COP: {tasa}")
+        return tasa
+    except Exception as e:
+        print(f"[WARN] No se pudo obtener tasa de cambio: {e}")
+        return 0
 
 
 def cargar_productos():
@@ -23,18 +48,12 @@ def cargar_productos():
     lista = []
     for doc in documentos:
         fields = doc.get("fields", {})
-        def parse_numero(field):
-            if "doubleValue" in field:
-                return float(field["doubleValue"])
-            if "integerValue" in field:
-                return int(field["integerValue"])
-            return 0
-
+        precio_usd = parse_numero(fields.get("price", {}))
         lista.append({
             "id": doc["name"].split("/")[-1],
             "nombre": fields.get("name", {}).get("stringValue", ""),
-            "precio_usd": parse_numero(fields.get("price", {})),
-            "precio_cop": parse_numero(fields.get("priceCOP", {})),
+            "precio_usd": precio_usd,
+            "precio_cop": round(precio_usd * tasa_usd_cop),
             "imagen_url": fields.get("imageUrl", {}).get("stringValue", ""),
         })
     print(f"[INFO] Productos cargados: {len(lista)}")
@@ -46,6 +65,7 @@ tiempo_m2 = 0.0
 tiempos_m3 = []
 tiempos_m4 = []
 
+tasa_usd_cop = cargar_tasa_cambio()
 productos = cargar_productos()
 productos_visibles = list(productos)  # subconjunto actualmente en el Listbox
 
