@@ -33,6 +33,7 @@ def cargar_productos():
 
 
 productos = cargar_productos()
+productos_visibles = list(productos)  # subconjunto actualmente en el Listbox
 
 root = tk.Tk()
 root.title("Tienda — Tkinter")
@@ -57,21 +58,30 @@ frame_detalle.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
 frame_detalle.pack_propagate(False)
 
 def poblar_listbox(lista):
+    global productos_visibles
+    productos_visibles = list(lista)
     listbox.delete(0, tk.END)
-    for p in lista:
+    for p in productos_visibles:
         listbox.insert(tk.END, p["nombre"])
 
 
 def on_buscar():
     termino = entry_busqueda.get().strip().lower()
     t0 = time.perf_counter()
-    if termino:
-        filtrados = [p for p in productos if termino in p["nombre"].lower()]
-    else:
-        filtrados = productos
+    filtrados = [p for p in productos if termino in p["nombre"].lower()] if termino else productos
     t1 = time.perf_counter()
     print(f"[M4] Tiempo filtrado: {t1 - t0:.6f}s — {len(filtrados)} resultado(s)")
     poblar_listbox(filtrados)
+
+
+def on_seleccionar(event):
+    seleccion = listbox.curselection()
+    if not seleccion:
+        return
+    producto = productos_visibles[seleccion[0]]
+    lbl_nombre.config(text=producto["nombre"])
+    lbl_precio_usd.config(text=f"USD  ${float(producto['precio_usd']):.2f}")
+    lbl_precio_cop.config(text=f"COP  ${int(producto['precio_cop']):,}".replace(",", "."))
 
 # Widgets de búsqueda
 tk.Label(frame_busqueda, text="🔍").pack(side=tk.LEFT)
@@ -87,8 +97,17 @@ scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
 poblar_listbox(productos)
+listbox.bind("<<ListboxSelect>>", on_seleccionar)
 
-# Etiqueta temporal del panel derecho
-tk.Label(frame_detalle, text="[Detalle]", fg="gray").pack(expand=True)
+# Panel detalle: nombre y precios
+tk.Label(frame_detalle, text="Detalle del producto", font=("Arial", 10, "bold"),
+         pady=8).pack()
+lbl_nombre = tk.Label(frame_detalle, text="", wraplength=240, justify=tk.LEFT,
+                      font=("Arial", 10))
+lbl_nombre.pack(padx=10, pady=(4, 12))
+lbl_precio_usd = tk.Label(frame_detalle, text="", font=("Arial", 10))
+lbl_precio_usd.pack(padx=10, anchor=tk.W)
+lbl_precio_cop = tk.Label(frame_detalle, text="", font=("Arial", 10))
+lbl_precio_cop.pack(padx=10, anchor=tk.W)
 
 root.mainloop()
