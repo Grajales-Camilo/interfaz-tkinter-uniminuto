@@ -56,8 +56,22 @@ frame_detalle = tk.Frame(frame_central, bd=1, relief=tk.SOLID, width=260)
 frame_detalle.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
 frame_detalle.pack_propagate(False)
 
+def poblar_listbox(lista):
+    listbox.delete(0, tk.END)
+    for p in lista:
+        listbox.insert(tk.END, p["nombre"])
+
+
 def on_buscar():
-    print("Buscar presionado")
+    termino = entry_busqueda.get().strip().lower()
+    t0 = time.perf_counter()
+    if termino:
+        filtrados = [p for p in productos if termino in p["nombre"].lower()]
+    else:
+        filtrados = productos
+    t1 = time.perf_counter()
+    print(f"[M4] Tiempo filtrado: {t1 - t0:.6f}s — {len(filtrados)} resultado(s)")
+    poblar_listbox(filtrados)
 
 # Widgets de búsqueda
 tk.Label(frame_busqueda, text="🔍").pack(side=tk.LEFT)
@@ -72,8 +86,7 @@ scrollbar.config(command=listbox.yview)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-for p in productos:
-    listbox.insert(tk.END, p["nombre"])
+poblar_listbox(productos)
 
 # Etiqueta temporal del panel derecho
 tk.Label(frame_detalle, text="[Detalle]", fg="gray").pack(expand=True)
