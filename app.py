@@ -1,6 +1,38 @@
 import tkinter as tk
+import requests
+import time
 
-PROJECT_ID = "reto-fullstack-basico"
+PROJECT_ID = "reto-fullstack-upb-af0d2"
+FIRESTORE_URL = (
+    f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}"
+    "/databases/(default)/documents/products"
+)
+
+
+def cargar_productos():
+    t0 = time.perf_counter()
+    respuesta = requests.get(FIRESTORE_URL)
+    t1 = time.perf_counter()
+    print(f"[M2] Tiempo carga Firestore: {t1 - t0:.3f}s")
+    respuesta.raise_for_status()
+    documentos = respuesta.json().get("documents", [])
+    lista = []
+    for doc in documentos:
+        fields = doc.get("fields", {})
+        lista.append({
+            "id": doc["name"].split("/")[-1],
+            "nombre": fields.get("name", {}).get("stringValue", ""),
+            "precio_usd": fields.get("price", {}).get("doubleValue")
+                          or fields.get("price", {}).get("integerValue", 0),
+            "precio_cop": fields.get("priceCOP", {}).get("doubleValue")
+                          or fields.get("priceCOP", {}).get("integerValue", 0),
+            "imagen_url": fields.get("imageUrl", {}).get("stringValue", ""),
+        })
+    print(f"[INFO] Productos cargados: {len(lista)}")
+    return lista
+
+
+productos = cargar_productos()
 
 root = tk.Tk()
 root.title("Tienda — Tkinter")
