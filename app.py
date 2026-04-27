@@ -1,6 +1,8 @@
 import tkinter as tk
 import requests
 import time
+from io import BytesIO
+from PIL import Image, ImageTk
 
 PROJECT_ID = "reto-fullstack-upb-af0d2"
 FIRESTORE_URL = (
@@ -74,11 +76,38 @@ def on_buscar():
     poblar_listbox(filtrados)
 
 
+def descargar_imagen(url):
+    t0 = time.perf_counter()
+    respuesta = requests.get(url, timeout=10)
+    t1 = time.perf_counter()
+    print(f"[M3] Tiempo descarga imagen: {t1 - t0:.3f}s")
+    respuesta.raise_for_status()
+    img = Image.open(BytesIO(respuesta.content))
+    img.thumbnail((200, 200))
+    return ImageTk.PhotoImage(img)
+
+
 def on_seleccionar(event):
     seleccion = listbox.curselection()
     if not seleccion:
         return
     producto = productos_visibles[seleccion[0]]
+
+    # Imagen
+    url = producto.get("imagen_url", "")
+    if url:
+        try:
+            foto = descargar_imagen(url)
+            lbl_imagen.config(image=foto, text="")
+            lbl_imagen.image = foto  # evita que el GC elimine la referencia
+        except Exception as e:
+            print(f"[WARN] No se pudo cargar imagen: {e}")
+            lbl_imagen.config(image="", text="Sin imagen")
+            lbl_imagen.image = None
+    else:
+        lbl_imagen.config(image="", text="Sin imagen")
+        lbl_imagen.image = None
+
     lbl_nombre.config(text=producto["nombre"])
     lbl_precio_usd.config(text=f"USD  ${float(producto['precio_usd']):.2f}")
     lbl_precio_cop.config(text=f"COP  ${int(producto['precio_cop']):,}".replace(",", "."))
@@ -99,9 +128,11 @@ listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 poblar_listbox(productos)
 listbox.bind("<<ListboxSelect>>", on_seleccionar)
 
-# Panel detalle: nombre y precios
+# Panel detalle: imagen, nombre y precios
 tk.Label(frame_detalle, text="Detalle del producto", font=("Arial", 10, "bold"),
          pady=8).pack()
+lbl_imagen = tk.Label(frame_detalle, text="Sin imagen", fg="gray")
+lbl_imagen.pack(pady=(0, 8))
 lbl_nombre = tk.Label(frame_detalle, text="", wraplength=240, justify=tk.LEFT,
                       font=("Arial", 10))
 lbl_nombre.pack(padx=10, pady=(4, 12))
