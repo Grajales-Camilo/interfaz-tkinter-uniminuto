@@ -131,7 +131,7 @@ tk.Button(frame_busqueda, text="Buscar", command=on_buscar).pack(side=tk.LEFT)
 
 # Listbox con scrollbar vertical
 scrollbar = tk.Scrollbar(frame_lista, orient=tk.VERTICAL)
-listbox = tk.Listbox(frame_lista, yscrollcommand=scrollbar.set, activestyle="arrow")
+listbox = tk.Listbox(frame_lista, yscrollcommand=scrollbar.set, activestyle="dotbox")
 scrollbar.config(command=listbox.yview)
 scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
