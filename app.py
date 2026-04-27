@@ -24,8 +24,16 @@ frame_detalle = tk.Frame(frame_central, bd=1, relief=tk.SOLID, width=260)
 frame_detalle.pack(side=tk.RIGHT, fill=tk.Y, padx=(10, 0))
 frame_detalle.pack_propagate(False)
 
+def on_buscar():
+    print("Buscar presionado")
+
+# Widgets de búsqueda
+tk.Label(frame_busqueda, text="🔍").pack(side=tk.LEFT)
+entry_busqueda = tk.Entry(frame_busqueda, width=40)
+entry_busqueda.pack(side=tk.LEFT, padx=(4, 8))
+tk.Button(frame_busqueda, text="Buscar", command=on_buscar).pack(side=tk.LEFT)
+
 # Etiquetas temporales para identificar cada frame visualmente
-tk.Label(frame_busqueda, text="[Búsqueda]", fg="gray").pack(side=tk.LEFT)
 tk.Label(frame_lista, text="[Lista de productos]", fg="gray").pack(expand=True)
 tk.Label(frame_detalle, text="[Detalle]", fg="gray").pack(expand=True)
 
